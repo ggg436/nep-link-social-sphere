@@ -1,12 +1,21 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Minus, ChevronDown, Phone, VideoIcon, Info, Image, Paperclip, Smile, ThumbsUp } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Chat {
   id: number;
   name: string;
   avatar: string;
   isOnline?: boolean;
+}
+
+interface Message {
+  id: string;
+  content: string;
+  sender_id: string;
+  created_at: string;
+  read: boolean;
 }
 
 interface ChatWindowProps {
@@ -17,6 +26,75 @@ interface ChatWindowProps {
 const ChatWindow = ({ chat, onClose }: ChatWindowProps) => {
   const [isMinimized, setIsMinimized] = useState(false);
   const [message, setMessage] = useState('');
+  const [messages, setMessages] = useState<Message[]>([]);
+
+  useEffect(() => {
+    // Fetch existing messages
+    fetchMessages();
+
+    // Subscribe to new messages
+    const channel = supabase
+      .channel('messages')
+      .on('postgres_changes', 
+        { 
+          event: 'INSERT', 
+          schema: 'public', 
+          table: 'messages',
+          filter: `receiver_id=eq.${chat.id}`
+        }, 
+        payload => {
+          const newMessage = payload.new as Message;
+          setMessages(prev => [...prev, newMessage]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [chat.id]);
+
+  const fetchMessages = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .or(`sender_id.eq.${chat.id},receiver_id.eq.${chat.id}`)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching messages:', error);
+        return;
+      }
+
+      setMessages(data || []);
+    } catch (error) {
+      console.error('Error in fetchMessages:', error);
+    }
+  };
+
+  const sendMessage = async () => {
+    if (!message.trim()) return;
+
+    try {
+      const { error } = await supabase
+        .from('messages')
+        .insert({
+          content: message,
+          receiver_id: chat.id,
+          sender_id: supabase.auth.getUser()?.data?.user?.id,
+        });
+
+      if (error) {
+        console.error('Error sending message:', error);
+        return;
+      }
+
+      setMessage('');
+    } catch (error) {
+      console.error('Error in sendMessage:', error);
+    }
+  };
 
   const toggleMinimize = () => {
     setIsMinimized(!isMinimized);
@@ -59,10 +137,20 @@ const ChatWindow = ({ chat, onClose }: ChatWindowProps) => {
       {!isMinimized && (
         <>
           <div className="flex-1 p-2 overflow-y-auto min-h-[300px]">
-            {/* Placeholder for messages */}
-            <div className="text-center text-gray-500 mt-4 text-xs">
-              No messages yet
-            </div>
+            {messages.map((msg) => (
+              <div 
+                key={msg.id}
+                className={`flex mb-2 ${msg.sender_id === supabase.auth.getUser()?.data?.user?.id ? 'justify-end' : 'justify-start'}`}
+              >
+                <div className={`max-w-[70%] p-2 rounded-lg ${
+                  msg.sender_id === supabase.auth.getUser()?.data?.user?.id 
+                    ? 'bg-blue-600 text-white' 
+                    : 'bg-gray-100'
+                }`}>
+                  {msg.content}
+                </div>
+              </div>
+            ))}
           </div>
           
           <div className="p-2 border-t border-gray-200">
@@ -83,11 +171,19 @@ const ChatWindow = ({ chat, onClose }: ChatWindowProps) => {
                   type="text"
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      sendMessage();
+                    }
+                  }}
                   placeholder="Aa"
                   className="flex-1 bg-transparent px-3 py-1 text-sm focus:outline-none"
                 />
               </div>
-              <button className="ml-1 p-1.5">
+              <button 
+                className="ml-1 p-1.5"
+                onClick={sendMessage}
+              >
                 {message.trim() ? (
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" />

@@ -1,4 +1,7 @@
+
 import { Search, Edit, Maximize2, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import ChatListItem from './ChatListItem';
 
 interface Chat {
@@ -13,14 +16,73 @@ interface Chat {
 }
 
 interface ChatListProps {
-  chats: Chat[];
   activeTab: string;
   onTabChange: (tab: string) => void;
   onChatClick: (chatId: number) => void;
   onClose: () => void;
 }
 
-const ChatList = ({ chats, activeTab, onTabChange, onChatClick, onClose }: ChatListProps) => {
+const ChatList = ({ activeTab, onTabChange, onChatClick, onClose }: ChatListProps) => {
+  const [chats, setChats] = useState<Chat[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    // Subscribe to real-time updates for new messages
+    const channel = supabase
+      .channel('messages-channel')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'messages' 
+        }, 
+        payload => {
+          console.log('Real-time update:', payload);
+          // Update chats when new messages arrive
+          // You would typically fetch the updated chat list here
+          fetchChats();
+        }
+      )
+      .subscribe();
+
+    // Initial fetch of chats
+    fetchChats();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const fetchChats = async () => {
+    try {
+      const { data: messages, error } = await supabase
+        .from('messages')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching messages:', error);
+        return;
+      }
+
+      // Transform messages into chat list format
+      // This is a simplified version - you would typically want to group by conversation
+      const transformedChats: Chat[] = messages.map(msg => ({
+        id: msg.id,
+        name: 'User', // You would typically fetch user details here
+        groupChat: false,
+        avatar: 'https://via.placeholder.com/40',
+        lastMessage: msg.content,
+        time: new Date(msg.created_at).toLocaleTimeString(),
+        unread: !msg.read
+      }));
+
+      setChats(transformedChats);
+    } catch (error) {
+      console.error('Error in fetchChats:', error);
+    }
+  };
+
   return (
     <div className="w-96 h-[600px] bg-white rounded-lg shadow-xl border border-gray-200 flex flex-col">
       {/* Header */}
@@ -50,7 +112,9 @@ const ChatList = ({ chats, activeTab, onTabChange, onChatClick, onClose }: ChatL
           </div>
           <input
             type="text"
-            placeholder="Hello"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search messages"
             className="bg-gray-100 w-full pl-10 pr-4 py-2 rounded-full border-none focus:outline-none focus:ring-1 focus:ring-gray-300 text-sm"
           />
         </div>
@@ -73,13 +137,7 @@ const ChatList = ({ chats, activeTab, onTabChange, onChatClick, onClose }: ChatL
           onClick={() => onTabChange('communities')}
         >
           Communities
-          <span className="ml-1 w-2 h-2 rounded-full bg-blue-600 inline-block"></span>
         </button>
-      </div>
-
-      {/* Message status */}
-      <div className="px-3 py-2 text-xs text-gray-500">
-        Missing chat history. <span className="text-blue-600 cursor-pointer">Restore now</span>
       </div>
 
       {/* Chat list */}
