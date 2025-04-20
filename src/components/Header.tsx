@@ -52,7 +52,7 @@ const Header = () => {
             </div>
             <input
               type="text"
-              placeholder="Search NepLink"
+              placeholder="Hello"
               className="bg-gray-100 w-full pl-10 pr-4 py-2 rounded-full border-none focus:outline-none focus:ring-2 focus:ring-neplink-blue"
             />
           </div>

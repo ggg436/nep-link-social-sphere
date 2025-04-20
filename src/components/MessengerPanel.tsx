@@ -1,3 +1,4 @@
+
 import { Search, Maximize2, Edit, X } from 'lucide-react';
 import { useState } from 'react';
 import ChatWindow from './ChatWindow';
@@ -140,7 +141,7 @@ const MessengerPanel = ({ onClose }: MessengerPanelProps) => {
             </div>
             <input
               type="text"
-              placeholder="Lovable Test"
+              placeholder="Hello"
               className="bg-gray-100 w-full pl-10 pr-4 py-2 rounded-full border-none focus:outline-none focus:ring-1 focus:ring-gray-300 text-sm"
             />
           </div>
