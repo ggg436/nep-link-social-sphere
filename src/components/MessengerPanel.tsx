@@ -1,13 +1,12 @@
 import { useState } from 'react';
-import { X } from 'lucide-react';
 import ChatList from './messenger/ChatList';
 import ChatWindow from './ChatWindow';
 
-// Sample data for chats
+// Sample data for chats - we'll keep this for the initial sample state
 const sampleChats = [
   {
-    id: 1,
-    name: 'RESEARCH, PUBLICATION and SCIENCE',
+    id: "1",
+    name: "RESEARCH, PUBLICATION and SCIENCE",
     groupChat: true,
     avatar: 'https://via.placeholder.com/40?text=R',
     lastMessage: 'Lauren: 📝 Call for Papers: - ...',
@@ -15,8 +14,8 @@ const sampleChats = [
     unread: true
   },
   {
-    id: 2,
-    name: '🇺🇸 USA FOR CO29',
+    id: "2",
+    name: "🇺🇸 USA FOR CO29",
     groupChat: true,
     avatar: 'https://via.placeholder.com/40?text=US',
     lastMessage: 'Prabin: Timro voli vi ho ra?',
@@ -24,8 +23,8 @@ const sampleChats = [
     unread: true
   },
   {
-    id: 3,
-    name: 'Hemanta Yogi',
+    id: "3",
+    name: "Hemanta Yogi",
     groupChat: false,
     avatar: 'https://via.placeholder.com/40?text=HY',
     lastMessage: 'Ok vaii',
@@ -33,8 +32,8 @@ const sampleChats = [
     unread: true
   },
   {
-    id: 4,
-    name: 'Python Projects with Code',
+    id: "4",
+    name: "Python Projects with Code",
     groupChat: true,
     avatar: 'https://via.placeholder.com/40?text=PY',
     lastMessage: 'Python Questions Discussion',
@@ -43,8 +42,8 @@ const sampleChats = [
     subtext: 'Pytha-je peux parler français'
   },
   {
-    id: 5,
-    name: 'Taekwondo Nepahm.com ❤️',
+    id: "5",
+    name: "Taekwondo Nepahm.com ❤️",
     groupChat: true,
     avatar: 'https://via.placeholder.com/40?text=TK',
     lastMessage: 'General chat',
@@ -53,8 +52,8 @@ const sampleChats = [
     subtext: 'Ramesh: Heart kop is that wha...'
   },
   {
-    id: 6,
-    name: 'Taekwondo Nepahm.com ❤️',
+    id: "6",
+    name: "Taekwondo Nepahm.com ❤️",
     groupChat: true,
     avatar: 'https://via.placeholder.com/40?text=TK',
     lastMessage: 'First sundarhaicha and belba',
@@ -63,8 +62,8 @@ const sampleChats = [
     subtext: 'Event has passed'
   },
   {
-    id: 7,
-    name: 'SPRING-FALL USA/MOCK PREPARAT...',
+    id: "7",
+    name: "SPRING-FALL USA/MOCK PREPARAT...",
     groupChat: true,
     avatar: 'https://via.placeholder.com/40?text=SF',
     lastMessage: 'F1 Queries',
@@ -73,8 +72,8 @@ const sampleChats = [
     subtext: 'Event has passed'
   },
   {
-    id: 8,
-    name: 'Sanjok Gc',
+    id: "8",
+    name: "Sanjok Gc",
     groupChat: false,
     avatar: 'https://via.placeholder.com/40?text=SG',
     lastMessage: 'You urgent a message',
@@ -82,8 +81,8 @@ const sampleChats = [
     unread: false
   },
   {
-    id: 9,
-    name: 'Nepal Astronomical Society',
+    id: "9",
+    name: "Nepal Astronomical Society",
     groupChat: true,
     avatar: 'https://via.placeholder.com/40?text=NAS',
     lastMessage: 'Abhishek Sam',
@@ -98,15 +97,15 @@ interface MessengerPanelProps {
 
 const MessengerPanel = ({ onClose }: MessengerPanelProps) => {
   const [activeTab, setActiveTab] = useState('inbox');
-  const [activeChats, setActiveChats] = useState<number[]>([]);
+  const [activeChats, setActiveChats] = useState<string[]>([]); // Changed from number[] to string[]
 
-  const handleChatClick = (chatId: number) => {
+  const handleChatClick = (chatId: string) => { // Changed from number to string
     if (!activeChats.includes(chatId)) {
       setActiveChats([...activeChats, chatId]);
     }
   };
 
-  const closeChat = (chatId: number) => {
+  const closeChat = (chatId: string) => { // Changed from number to string
     setActiveChats(activeChats.filter(id => id !== chatId));
   };
 
@@ -114,7 +113,6 @@ const MessengerPanel = ({ onClose }: MessengerPanelProps) => {
     <>
       <div className="fixed right-4 top-14 z-50">
         <ChatList
-          chats={sampleChats}
           activeTab={activeTab}
           onTabChange={setActiveTab}
           onChatClick={handleChatClick}

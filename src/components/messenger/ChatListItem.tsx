@@ -1,6 +1,6 @@
 
 interface Chat {
-  id: number;
+  id: string; // Changed from number to string to match Supabase UUID
   name: string;
   groupChat: boolean;
   avatar: string;
@@ -12,7 +12,7 @@ interface Chat {
 
 interface ChatListItemProps {
   chat: Chat;
-  onClick: (chatId: number) => void;
+  onClick: (chatId: string) => void; // Changed from number to string
 }
 
 const ChatListItem = ({ chat, onClick }: ChatListItemProps) => {

@@ -2,9 +2,10 @@
 import { useState, useEffect } from 'react';
 import { X, Minus, ChevronDown, Phone, VideoIcon, Info, Image, Paperclip, Smile, ThumbsUp } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 
 interface Chat {
-  id: number;
+  id: string; // Changed from number to string to match Supabase UUID
   name: string;
   avatar: string;
   isOnline?: boolean;
@@ -14,6 +15,7 @@ interface Message {
   id: string;
   content: string;
   sender_id: string;
+  receiver_id: string;
   created_at: string;
   read: boolean;
 }
@@ -27,8 +29,18 @@ const ChatWindow = ({ chat, onClose }: ChatWindowProps) => {
   const [isMinimized, setIsMinimized] = useState(false);
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   useEffect(() => {
+    // Get current user
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setCurrentUserId(user.id);
+      }
+    };
+    getCurrentUser();
+
     // Fetch existing messages
     fetchMessages();
 
@@ -64,17 +76,27 @@ const ChatWindow = ({ chat, onClose }: ChatWindowProps) => {
 
       if (error) {
         console.error('Error fetching messages:', error);
+        toast({
+          title: "Error fetching messages",
+          description: error.message,
+          variant: "destructive"
+        });
         return;
       }
 
       setMessages(data || []);
     } catch (error) {
       console.error('Error in fetchMessages:', error);
+      toast({
+        title: "Error",
+        description: "Something went wrong while fetching messages",
+        variant: "destructive"
+      });
     }
   };
 
   const sendMessage = async () => {
-    if (!message.trim()) return;
+    if (!message.trim() || !currentUserId) return;
 
     try {
       const { error } = await supabase
@@ -82,17 +104,27 @@ const ChatWindow = ({ chat, onClose }: ChatWindowProps) => {
         .insert({
           content: message,
           receiver_id: chat.id,
-          sender_id: supabase.auth.getUser()?.data?.user?.id,
+          sender_id: currentUserId
         });
 
       if (error) {
         console.error('Error sending message:', error);
+        toast({
+          title: "Error sending message",
+          description: error.message,
+          variant: "destructive"
+        });
         return;
       }
 
       setMessage('');
     } catch (error) {
       console.error('Error in sendMessage:', error);
+      toast({
+        title: "Error",
+        description: "Something went wrong while sending your message",
+        variant: "destructive"
+      });
     }
   };
 
@@ -140,10 +172,10 @@ const ChatWindow = ({ chat, onClose }: ChatWindowProps) => {
             {messages.map((msg) => (
               <div 
                 key={msg.id}
-                className={`flex mb-2 ${msg.sender_id === supabase.auth.getUser()?.data?.user?.id ? 'justify-end' : 'justify-start'}`}
+                className={`flex mb-2 ${msg.sender_id === currentUserId ? 'justify-end' : 'justify-start'}`}
               >
                 <div className={`max-w-[70%] p-2 rounded-lg ${
-                  msg.sender_id === supabase.auth.getUser()?.data?.user?.id 
+                  msg.sender_id === currentUserId 
                     ? 'bg-blue-600 text-white' 
                     : 'bg-gray-100'
                 }`}>

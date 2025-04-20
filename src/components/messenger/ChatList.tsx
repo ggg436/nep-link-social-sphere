@@ -3,9 +3,10 @@ import { Search, Edit, Maximize2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import ChatListItem from './ChatListItem';
+import { toast } from '@/hooks/use-toast';
 
 interface Chat {
-  id: number;
+  id: string; // Changed from number to string to match Supabase UUID
   name: string;
   groupChat: boolean;
   avatar: string;
@@ -18,7 +19,7 @@ interface Chat {
 interface ChatListProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
-  onChatClick: (chatId: number) => void;
+  onChatClick: (chatId: string) => void; // Changed from number to string
   onClose: () => void;
 }
 
@@ -39,7 +40,6 @@ const ChatList = ({ activeTab, onTabChange, onChatClick, onClose }: ChatListProp
         payload => {
           console.log('Real-time update:', payload);
           // Update chats when new messages arrive
-          // You would typically fetch the updated chat list here
           fetchChats();
         }
       )
@@ -62,6 +62,11 @@ const ChatList = ({ activeTab, onTabChange, onChatClick, onClose }: ChatListProp
 
       if (error) {
         console.error('Error fetching messages:', error);
+        toast({
+          title: "Error fetching messages",
+          description: error.message,
+          variant: "destructive"
+        });
         return;
       }
 
@@ -80,6 +85,11 @@ const ChatList = ({ activeTab, onTabChange, onChatClick, onClose }: ChatListProp
       setChats(transformedChats);
     } catch (error) {
       console.error('Error in fetchChats:', error);
+      toast({
+        title: "Error",
+        description: "Something went wrong while fetching chats",
+        variant: "destructive"
+      });
     }
   };
 
@@ -142,13 +152,19 @@ const ChatList = ({ activeTab, onTabChange, onChatClick, onClose }: ChatListProp
 
       {/* Chat list */}
       <div className="flex-1 overflow-y-auto">
-        {chats.map((chat) => (
-          <ChatListItem 
-            key={chat.id} 
-            chat={chat}
-            onClick={onChatClick}
-          />
-        ))}
+        {chats.length > 0 ? (
+          chats.map((chat) => (
+            <ChatListItem 
+              key={chat.id} 
+              chat={chat}
+              onClick={onChatClick}
+            />
+          ))
+        ) : (
+          <div className="p-4 text-center text-gray-500">
+            No messages yet
+          </div>
+        )}
       </div>
     </div>
   );
