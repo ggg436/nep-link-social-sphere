@@ -3,6 +3,9 @@ import { useState, FormEvent, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from "../hooks/use-toast";
 import AuthContext from '../contexts/AuthContext';
+import { supabase } from "@/integrations/supabase/client";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -17,20 +20,30 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      // Mock login for demonstration - in real app, this would call an API
-      if (email && password) {
-        // Simulate API call delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Mock successful login with user data
+      // Login with Supabase
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Login failed",
+          description: error.message,
+        });
+        return;
+      }
+
+      if (data.user) {
         const userData = {
-          id: '1',
-          name: 'John Doe',
-          email,
-          profileImage: 'https://images.unsplash.com/photo-1649972904349-6e44c42644a7'
+          id: data.user.id,
+          name: data.user.user_metadata?.first_name 
+            ? `${data.user.user_metadata.first_name} ${data.user.user_metadata.last_name || ''}`
+            : email.split('@')[0],
+          email: data.user.email || '',
         };
         
-        // Set user in context and localStorage for persistence
         setUser(userData);
         setIsAuthenticated(true);
         localStorage.setItem('user', JSON.stringify(userData));
@@ -41,18 +54,12 @@ const Login = () => {
         });
         
         navigate('/');
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Login failed",
-          description: "Please enter both email and password",
-        });
       }
     } catch (error) {
       toast({
         variant: "destructive",
         title: "Login failed",
-        description: "Invalid credentials. Please try again.",
+        description: "Something went wrong. Please try again.",
       });
     } finally {
       setIsLoading(false);
@@ -79,27 +86,27 @@ const Login = () => {
         <div className="w-full max-w-md">
           <div className="bg-white rounded-lg neplink-shadow p-6">
             <form onSubmit={handleSubmit} className="space-y-4">
-              <input
+              <Input
                 type="text"
                 placeholder="Email address or phone number"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="input-field"
               />
-              <input
+              <Input
                 type="password"
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="input-field"
               />
-              <button 
+              <Button 
                 type="submit"
                 disabled={isLoading}
-                className="auth-button-blue"
+                className="auth-button-blue w-full"
               >
                 {isLoading ? "Logging in..." : "Log in"}
-              </button>
+              </Button>
             </form>
             
             <div className="mt-4 text-center">

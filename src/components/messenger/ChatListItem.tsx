@@ -1,6 +1,6 @@
 
-interface Chat {
-  id: string; // Changed from number to string to match Supabase UUID
+export interface Chat {
+  id: string;
   name: string;
   groupChat: boolean;
   avatar: string;
@@ -12,7 +12,7 @@ interface Chat {
 
 interface ChatListItemProps {
   chat: Chat;
-  onClick: (chatId: string) => void; // Changed from number to string
+  onClick: (chatId: string) => void;
 }
 
 const ChatListItem = ({ chat, onClick }: ChatListItemProps) => {
@@ -25,7 +25,7 @@ const ChatListItem = ({ chat, onClick }: ChatListItemProps) => {
         <img 
           src={chat.avatar} 
           alt={chat.name} 
-          className="w-12 h-12 rounded-full"
+          className="w-12 h-12 rounded-full object-cover"
         />
       </div>
       <div className="ml-2 flex-1 min-w-0">
