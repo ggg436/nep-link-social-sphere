@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
 interface Chat {
-  id: string; // Changed from number to string to match Supabase UUID
+  id: string;
   name: string;
   avatar: string;
   isOnline?: boolean;
@@ -13,11 +13,10 @@ interface Chat {
 
 interface Message {
   id: string;
-  content: string;
+  message_text: string;
   sender_id: string;
   receiver_id: string;
   created_at: string;
-  read: boolean;
 }
 
 interface ChatWindowProps {
@@ -32,46 +31,59 @@ const ChatWindow = ({ chat, onClose }: ChatWindowProps) => {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
+
     // Get current user
     const getCurrentUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setCurrentUserId(user.id);
+      const { data } = await supabase.auth.getUser();
+      if (isMounted && data.user) {
+        setCurrentUserId(data.user.id);
       }
     };
     getCurrentUser();
 
-    // Fetch existing messages
+    // Fetch existing messages for this chat
     fetchMessages();
 
     // Subscribe to new messages
     const channel = supabase
       .channel('messages')
-      .on('postgres_changes', 
-        { 
-          event: 'INSERT', 
-          schema: 'public', 
+      .on('postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
           table: 'messages',
-          filter: `receiver_id=eq.${chat.id}`
-        }, 
-        payload => {
-          const newMessage = payload.new as Message;
-          setMessages(prev => [...prev, newMessage]);
+        },
+        (payload) => {
+          const newMessage: Message = payload.new;
+          // Only append if this message is relevant for this chat window
+          if (
+            (newMessage.sender_id === chat.id && newMessage.receiver_id === currentUserId) ||
+            (newMessage.receiver_id === chat.id && newMessage.sender_id === currentUserId)
+          ) {
+            setMessages(prev => {
+              // Avoid duplicate if already exists
+              return prev.some(m => m.id === newMessage.id) ? prev : [...prev, newMessage];
+            });
+          }
         }
       )
       .subscribe();
 
     return () => {
+      isMounted = false;
       supabase.removeChannel(channel);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chat.id]);
 
   const fetchMessages = async () => {
     try {
+      // Fetch only the messages between the current user and this chat (other user)
       const { data, error } = await supabase
         .from('messages')
         .select('*')
-        .or(`sender_id.eq.${chat.id},receiver_id.eq.${chat.id}`)
+        .or(`and(sender_id.eq.${chat.id},receiver_id.eq.${currentUserId}),and(sender_id.eq.${currentUserId},receiver_id.eq.${chat.id})`)
         .order('created_at', { ascending: true });
 
       if (error) {
@@ -102,7 +114,7 @@ const ChatWindow = ({ chat, onClose }: ChatWindowProps) => {
       const { error } = await supabase
         .from('messages')
         .insert({
-          content: message,
+          message_text: message,
           receiver_id: chat.id,
           sender_id: currentUserId
         });
@@ -116,7 +128,6 @@ const ChatWindow = ({ chat, onClose }: ChatWindowProps) => {
         });
         return;
       }
-
       setMessage('');
     } catch (error) {
       console.error('Error in sendMessage:', error);
@@ -138,9 +149,9 @@ const ChatWindow = ({ chat, onClose }: ChatWindowProps) => {
       <div className="px-3 py-2 border-b border-gray-200 flex items-center justify-between bg-white rounded-t-lg">
         <div className="flex items-center cursor-pointer" onClick={toggleMinimize}>
           <div className="relative mr-2">
-            <img 
-              src={chat.avatar} 
-              alt={chat.name} 
+            <img
+              src={chat.avatar}
+              alt={chat.name}
               className="w-8 h-8 rounded-full"
             />
             {chat.isOnline && (
@@ -169,22 +180,26 @@ const ChatWindow = ({ chat, onClose }: ChatWindowProps) => {
       {!isMinimized && (
         <>
           <div className="flex-1 p-2 overflow-y-auto min-h-[300px]">
-            {messages.map((msg) => (
-              <div 
-                key={msg.id}
-                className={`flex mb-2 ${msg.sender_id === currentUserId ? 'justify-end' : 'justify-start'}`}
-              >
-                <div className={`max-w-[70%] p-2 rounded-lg ${
-                  msg.sender_id === currentUserId 
-                    ? 'bg-blue-600 text-white' 
-                    : 'bg-gray-100'
-                }`}>
-                  {msg.content}
+            {messages.length === 0 ? (
+              <div className="text-center text-gray-400 mt-14">No messages yet</div>
+            ) : (
+              messages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`flex mb-2 ${msg.sender_id === currentUserId ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div className={`max-w-[70%] p-2 rounded-lg ${
+                    msg.sender_id === currentUserId
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100'
+                  }`}>
+                    {msg.message_text}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
-          
+
           <div className="p-2 border-t border-gray-200">
             <div className="flex items-center">
               <div className="flex space-x-1 mr-1">
@@ -212,7 +227,7 @@ const ChatWindow = ({ chat, onClose }: ChatWindowProps) => {
                   className="flex-1 bg-transparent px-3 py-1 text-sm focus:outline-none"
                 />
               </div>
-              <button 
+              <button
                 className="ml-1 p-1.5"
                 onClick={sendMessage}
               >
