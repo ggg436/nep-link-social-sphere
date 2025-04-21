@@ -11,10 +11,9 @@ interface Chat {
   isOnline?: boolean;
 }
 
-// Update the Message interface to match Supabase's schema
 interface Message {
   id: string;
-  content: string; // Changed from message_text to content
+  message_text: string;
   sender_id: string;
   receiver_id: string;
   created_at: string;
@@ -35,7 +34,6 @@ const ChatWindow = ({ chat, onClose }: ChatWindowProps) => {
   useEffect(() => {
     let isMounted = true;
 
-    // Get current user
     const getCurrentUser = async () => {
       const { data } = await supabase.auth.getUser();
       if (isMounted && data.user) {
@@ -44,12 +42,10 @@ const ChatWindow = ({ chat, onClose }: ChatWindowProps) => {
     };
     getCurrentUser();
 
-    // Fetch existing messages for this chat
     if (currentUserId) {
       fetchMessages();
     }
 
-    // Subscribe to new messages
     const channel = supabase
       .channel('messages')
       .on('postgres_changes',
@@ -60,14 +56,11 @@ const ChatWindow = ({ chat, onClose }: ChatWindowProps) => {
         },
         (payload) => {
           const newMessage = payload.new as Message;
-          
-          // Only append if this message is relevant for this chat window
           if (
             (newMessage.sender_id === chat.id && newMessage.receiver_id === currentUserId) ||
             (newMessage.receiver_id === chat.id && newMessage.sender_id === currentUserId)
           ) {
             setMessages(prev => {
-              // Avoid duplicate if already exists
               return prev.some(m => m.id === newMessage.id) ? prev : [...prev, newMessage];
             });
           }
@@ -83,7 +76,6 @@ const ChatWindow = ({ chat, onClose }: ChatWindowProps) => {
 
   const fetchMessages = async () => {
     try {
-      // Fetch only the messages between the current user and this chat (other user)
       const { data, error } = await supabase
         .from('messages')
         .select('*')
@@ -118,7 +110,7 @@ const ChatWindow = ({ chat, onClose }: ChatWindowProps) => {
       const { error } = await supabase
         .from('messages')
         .insert({
-          content: message, // Changed from message_text to content
+          message_text: message,
           receiver_id: chat.id,
           sender_id: currentUserId
         });
@@ -180,7 +172,6 @@ const ChatWindow = ({ chat, onClose }: ChatWindowProps) => {
         </div>
       </div>
 
-      {/* Content */}
       {!isMinimized && (
         <>
           <div className="flex-1 p-2 overflow-y-auto min-h-[300px]">
@@ -197,7 +188,7 @@ const ChatWindow = ({ chat, onClose }: ChatWindowProps) => {
                       ? 'bg-blue-600 text-white'
                       : 'bg-gray-100'
                   }`}>
-                    {msg.content}
+                    {msg.message_text}
                   </div>
                 </div>
               ))
@@ -252,3 +243,4 @@ const ChatWindow = ({ chat, onClose }: ChatWindowProps) => {
 };
 
 export default ChatWindow;
+
