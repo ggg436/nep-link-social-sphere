@@ -11,9 +11,10 @@ interface Chat {
   isOnline?: boolean;
 }
 
+// Update the Message interface to match Supabase's schema
 interface Message {
   id: string;
-  message_text: string;
+  content: string; // Changed from message_text to content to match Supabase schema
   sender_id: string;
   receiver_id: string;
   created_at: string;
@@ -110,7 +111,7 @@ const ChatWindow = ({ chat, onClose }: ChatWindowProps) => {
       const { error } = await supabase
         .from('messages')
         .insert({
-          message_text: message,
+          content: message, // Using content field to match Supabase schema
           receiver_id: chat.id,
           sender_id: currentUserId
         });
@@ -188,7 +189,7 @@ const ChatWindow = ({ chat, onClose }: ChatWindowProps) => {
                       ? 'bg-blue-600 text-white'
                       : 'bg-gray-100'
                   }`}>
-                    {msg.message_text}
+                    {msg.content} {/* Using content instead of message_text */}
                   </div>
                 </div>
               ))
@@ -243,4 +244,3 @@ const ChatWindow = ({ chat, onClose }: ChatWindowProps) => {
 };
 
 export default ChatWindow;
-
