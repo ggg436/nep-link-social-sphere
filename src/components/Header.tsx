@@ -1,4 +1,3 @@
-
 import { useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
@@ -12,7 +11,8 @@ import {
   LayoutGrid, 
   LogOut, 
   Settings, 
-  HelpCircle
+  HelpCircle,
+  Mail
 } from 'lucide-react';
 import { useToast } from "../hooks/use-toast";
 import AuthContext from '../contexts/AuthContext';
@@ -77,6 +77,12 @@ const Header = () => {
             className="px-10 py-2 rounded-lg hover:bg-gray-100"
           >
             <Video className="h-6 w-6" />
+          </Link>
+          <Link 
+            to="/contact" 
+            className="px-10 py-2 rounded-lg hover:bg-gray-100"
+          >
+            <Mail className="h-6 w-6" />
           </Link>
         </nav>
 
