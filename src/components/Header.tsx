@@ -11,7 +11,8 @@ import {
   LayoutGrid, 
   LogOut, 
   Settings, 
-  HelpCircle
+  HelpCircle,
+  ShoppingBag
 } from 'lucide-react';
 import { useToast } from "../hooks/use-toast";
 import AuthContext from '../contexts/AuthContext';
@@ -76,6 +77,12 @@ const Header = () => {
             className="px-10 py-2 rounded-lg hover:bg-gray-100"
           >
             <Video className="h-6 w-6" />
+          </Link>
+          <Link 
+            to="/marketplace" 
+            className="px-10 py-2 rounded-lg hover:bg-gray-100"
+          >
+            <ShoppingBag className="h-6 w-6" />
           </Link>
         </nav>
 

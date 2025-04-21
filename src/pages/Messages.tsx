@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Search, Edit, Phone, VideoIcon, Info, Image, Smile, ThumbsUp, Expand, ArrowUp, Maximize2 } from 'lucide-react';
 
@@ -63,7 +62,7 @@ const Messages = () => {
       id: 5,
       name: "Prabin Yadav",
       image: "https://images.unsplash.com/photo-1649972904349-6e44c42644a7",
-      lastMessage: "K garna gako hos muji",
+      lastMessage: "K garna gako hos ",
       time: "Sat",
       isOnline: false
     }
@@ -140,7 +139,7 @@ const Messages = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
             <input
               type="text"
-              placeholder="Search Messenger"
+              placeholder="huuuu"
               className="w-full bg-gray-100 rounded-full pl-10 pr-4 py-2 focus:outline-none"
             />
           </div>
