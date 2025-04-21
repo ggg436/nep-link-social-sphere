@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Search, Edit, Phone, VideoIcon, Info, Image, Smile, ThumbsUp, Expand, ArrowUp, Maximize2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -6,13 +7,16 @@ import ChatWindow from '@/components/ChatWindow';
 interface Contact {
   id: string;
   name: string;
-  image: string;
+  image: string; // This is the equivalent of avatar for Contact
   lastMessage: string;
   time: string;
   isOnline: boolean;
   unread?: boolean;
   groupChat?: boolean;
   subtext?: string;
+  // Add these properties to make Contact compatible with UserProfile
+  avatar?: string; // Added to match UserProfile
+  full_name?: string; // Added to match UserProfile
 }
 
 interface Message {
@@ -194,6 +198,24 @@ const Messages = () => {
     }
   };
 
+  // Helper function to get proper name display value based on contact type
+  const getContactName = (contact: Contact | UserProfile | undefined): string => {
+    if (!contact) return '';
+    return 'full_name' in contact ? contact.full_name : contact.name;
+  };
+
+  // Helper function to get proper image/avatar display value based on contact type
+  const getContactImage = (contact: Contact | UserProfile | undefined): string => {
+    if (!contact) return 'https://via.placeholder.com/40?text=U';
+    
+    if ('avatar' in contact && contact.avatar) {
+      return contact.avatar;
+    } else if ('image' in contact) {
+      return contact.image;
+    }
+    return 'https://via.placeholder.com/40?text=U';
+  };
+
   return (
     <div className="flex h-[calc(100vh-56px)] -m-4">
       {/* Contacts sidebar */}
@@ -287,8 +309,8 @@ const Messages = () => {
             <div className="flex items-center">
               <div className="relative mr-3">
                 <img 
-                  src={selectedContactProfile?.avatar || (selectedContactProfile as Contact)?.image || 'https://via.placeholder.com/40?text=U'} 
-                  alt={selectedContactProfile?.full_name || (selectedContactProfile as Contact)?.name || ''} 
+                  src={getContactImage(selectedContactProfile)} 
+                  alt={getContactName(selectedContactProfile)} 
                   className="w-10 h-10 rounded-full object-cover"
                 />
                 {(selectedContactProfile as Contact)?.isOnline && (
@@ -296,7 +318,7 @@ const Messages = () => {
                 )}
               </div>
               <div>
-                <h3 className="font-semibold">{selectedContactProfile?.full_name || (selectedContactProfile as Contact)?.name}</h3>
+                <h3 className="font-semibold">{getContactName(selectedContactProfile)}</h3>
                 <p className="text-xs text-gray-500">
                   {(selectedContactProfile as Contact)?.isOnline ? 'Active now' : 'Inactive'}
                 </p>
@@ -325,8 +347,8 @@ const Messages = () => {
                 >
                   {message.senderId !== 0 && (
                     <img 
-                      src={selectedContactProfile?.avatar || (selectedContactProfile as Contact)?.image || 'https://via.placeholder.com/40?text=U'} 
-                      alt={selectedContactProfile?.full_name || (selectedContactProfile as Contact)?.name || ''} 
+                      src={getContactImage(selectedContactProfile)} 
+                      alt={getContactName(selectedContactProfile)} 
                       className="w-8 h-8 rounded-full object-cover mr-2 flex-shrink-0"
                     />
                   )}
@@ -344,7 +366,7 @@ const Messages = () => {
                       <span className="text-xs text-gray-500">{message.time}</span>
                       {message.senderId === 0 && message.isRead && (
                         <img 
-                          src={selectedContactProfile?.avatar || (selectedContactProfile as Contact)?.image || 'https://via.placeholder.com/40?text=U'} 
+                          src={getContactImage(selectedContactProfile)} 
                           alt="Read" 
                           className="w-3 h-3 rounded-full ml-1"
                         />

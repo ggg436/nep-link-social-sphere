@@ -14,7 +14,7 @@ interface Chat {
 // Update the Message interface to match Supabase's schema
 interface Message {
   id: string;
-  content: string; // Changed from message_text to content to match Supabase schema
+  content: string; // This field matches the database schema
   sender_id: string;
   receiver_id: string;
   created_at: string;
