@@ -75,8 +75,18 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-gray-100">
-      <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-10">
+    <div className="min-h-screen flex flex-col md:flex-row bg-gray-100 relative overflow-hidden">
+      {/* Animated floating objects */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="animate-float-slow absolute top-1/4 left-1/4 w-20 h-20 rounded-full bg-blue-200 opacity-60"></div>
+        <div className="animate-float-medium absolute top-3/4 left-1/6 w-14 h-14 rounded-full bg-blue-300 opacity-50"></div>
+        <div className="animate-float-fast absolute top-1/2 right-1/4 w-16 h-16 rounded-lg bg-blue-100 opacity-40"></div>
+        <div className="animate-float-medium absolute bottom-1/4 right-1/3 w-24 h-24 rounded-full bg-blue-200 opacity-30"></div>
+        <div className="animate-float-slow animate-spin-slow absolute top-1/3 right-1/5 w-12 h-12 bg-blue-300 opacity-20 transform rotate-45"></div>
+        <div className="animate-float-fast absolute bottom-1/3 left-1/3 w-10 h-10 rounded-lg bg-blue-400 opacity-40 transform rotate-12"></div>
+      </div>
+      
+      <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-10 relative z-10">
         <div className="text-center md:text-left max-w-md">
           <div className="flex justify-center md:justify-start mb-4">
             <img src="/neplink-logo.svg" alt="NepLink" className="h-14 w-14" />
@@ -88,9 +98,9 @@ const Login = () => {
         </div>
       </div>
       
-      <div className="flex-1 flex items-center justify-center p-6 md:p-10">
+      <div className="flex-1 flex items-center justify-center p-6 md:p-10 relative z-10">
         <div className="w-full max-w-md">
-          <div className="bg-white rounded-lg neplink-shadow p-6">
+          <div className="bg-white rounded-lg neplink-shadow p-6 backdrop-blur-sm bg-opacity-90">
             <form onSubmit={handleSubmit} className="space-y-4">
               <Input
                 type="text"
