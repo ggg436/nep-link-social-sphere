@@ -1,4 +1,3 @@
-
 import { useState, FormEvent, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from "../hooks/use-toast";
@@ -17,6 +16,7 @@ import {
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import CongratulationsDialog from "@/components/CongratulationsDialog";
 
 const registerSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -34,6 +34,7 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 
 const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [showCongrats, setShowCongrats] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { setUser, setIsAuthenticated } = useContext(AuthContext);
@@ -57,7 +58,7 @@ const Register = () => {
     setIsLoading(true);
 
     try {
-      // Register with Supabase
+      // Register with Supabase (email + phone)
       const { data, error } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
@@ -73,33 +74,38 @@ const Register = () => {
         },
       });
 
+      // Error handling based on Supabase error codes/messages
       if (error) {
+        let description = error.message;
+        if (
+          description.toLowerCase().includes("email") &&
+          description.toLowerCase().includes("exists")
+        ) {
+          description = "This email is already in use. Please use a different email.";
+        }
+        if (
+          description.toLowerCase().includes("phone") &&
+          description.toLowerCase().includes("exists")
+        ) {
+          description = "This phone number is already in use. Please use a different phone number.";
+        }
         toast({
           variant: "destructive",
           title: "Registration failed",
-          description: error.message,
+          description,
         });
+        setIsLoading(false);
         return;
       }
 
       if (data.user) {
-        const userData = {
-          id: data.user.id,
-          name: `${values.firstName} ${values.lastName}`,
-          email: values.email,
-        };
-
-        setUser(userData);
-        setIsAuthenticated(true);
-        localStorage.setItem('user', JSON.stringify(userData));
-
-        toast({
-          title: "Account created",
-          description: "You have successfully registered and logged in.",
-        });
-        navigate("/");
+        setShowCongrats(true);
+        setTimeout(() => {
+          setShowCongrats(false);
+          navigate("/login");
+        }, 2000);
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Registration failed",
@@ -135,6 +141,7 @@ const Register = () => {
 
   return (
     <div className="min-h-screen flex justify-center items-center bg-gray-100 p-4">
+      <CongratulationsDialog open={showCongrats} onClose={() => setShowCongrats(false)} />
       <div className="w-full max-w-md">
         <div className="text-center mb-4">
           <img src="/neplink-logo.svg" alt="NepLink" className="h-14 w-14 mx-auto" />

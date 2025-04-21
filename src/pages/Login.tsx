@@ -1,4 +1,3 @@
-
 import { useState, FormEvent, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from "../hooks/use-toast";
@@ -11,6 +10,7 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { setUser, setIsAuthenticated } = useContext(AuthContext);
@@ -18,6 +18,7 @@ const Login = () => {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setLoginError(null);
 
     try {
       // Login with Supabase
@@ -27,11 +28,17 @@ const Login = () => {
       });
 
       if (error) {
+        let description = error.message;
+        if (description.toLowerCase().includes('invalid login credentials')) {
+          description = "Incorrect email or password. Please try again.";
+        }
+        setLoginError(description);
         toast({
           variant: "destructive",
           title: "Login failed",
-          description: error.message,
+          description,
         });
+        setIsLoading(false);
         return;
       }
 
@@ -56,6 +63,7 @@ const Login = () => {
         navigate('/');
       }
     } catch (error) {
+      setLoginError("Something went wrong. Please try again.");
       toast({
         variant: "destructive",
         title: "Login failed",
@@ -68,7 +76,6 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-gray-100">
-      {/* Left side - Logo and tagline */}
       <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-10">
         <div className="text-center md:text-left max-w-md">
           <div className="flex justify-center md:justify-start mb-4">
@@ -81,7 +88,6 @@ const Login = () => {
         </div>
       </div>
       
-      {/* Right side - Login form */}
       <div className="flex-1 flex items-center justify-center p-6 md:p-10">
         <div className="w-full max-w-md">
           <div className="bg-white rounded-lg neplink-shadow p-6">
@@ -100,6 +106,9 @@ const Login = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 className="input-field"
               />
+              {loginError && (
+                <div className="text-red-500 text-sm">{loginError}</div>
+              )}
               <Button 
                 type="submit"
                 disabled={isLoading}
