@@ -11,12 +11,14 @@ interface Chat {
   isOnline?: boolean;
 }
 
+// Update the Message interface to match Supabase's schema
 interface Message {
   id: string;
-  message_text: string;
+  content: string; // Changed from message_text to content
   sender_id: string;
   receiver_id: string;
   created_at: string;
+  read: boolean;
 }
 
 interface ChatWindowProps {
@@ -43,7 +45,9 @@ const ChatWindow = ({ chat, onClose }: ChatWindowProps) => {
     getCurrentUser();
 
     // Fetch existing messages for this chat
-    fetchMessages();
+    if (currentUserId) {
+      fetchMessages();
+    }
 
     // Subscribe to new messages
     const channel = supabase
@@ -55,7 +59,8 @@ const ChatWindow = ({ chat, onClose }: ChatWindowProps) => {
           table: 'messages',
         },
         (payload) => {
-          const newMessage: Message = payload.new;
+          const newMessage = payload.new as Message;
+          
           // Only append if this message is relevant for this chat window
           if (
             (newMessage.sender_id === chat.id && newMessage.receiver_id === currentUserId) ||
@@ -74,8 +79,7 @@ const ChatWindow = ({ chat, onClose }: ChatWindowProps) => {
       isMounted = false;
       supabase.removeChannel(channel);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chat.id]);
+  }, [chat.id, currentUserId]);
 
   const fetchMessages = async () => {
     try {
@@ -114,7 +118,7 @@ const ChatWindow = ({ chat, onClose }: ChatWindowProps) => {
       const { error } = await supabase
         .from('messages')
         .insert({
-          message_text: message,
+          content: message, // Changed from message_text to content
           receiver_id: chat.id,
           sender_id: currentUserId
         });
@@ -193,7 +197,7 @@ const ChatWindow = ({ chat, onClose }: ChatWindowProps) => {
                       ? 'bg-blue-600 text-white'
                       : 'bg-gray-100'
                   }`}>
-                    {msg.message_text}
+                    {msg.content}
                   </div>
                 </div>
               ))
